@@ -1,4 +1,5 @@
 
+const text = document.getElementById("title-text");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
@@ -32,7 +33,6 @@ class Star {
     constructor(x, y) {
         this.location = new Vector2(x, y);
         this.velocity = new Vector2( Math.random() * 2 - 1, Math.random() * 2 -1);
-        this.pull = 0.01;
     }
     draw() {
         ctx.beginPath();
@@ -58,12 +58,45 @@ class Star {
             v.y += canvas.height;
         }
         this.location = v;
+
+        let x = this.location.x;
+        let y = this.location.y;
+
+        for(let i = 0; i < field.spaces.length; i++) {
+            let space = field.spaces[i];
+
+            let x1 = space.loc1.x;
+            let y1 = space.loc1.y;
+
+            let x2 = space.loc2.x;
+            let y2 = space.loc2.y;
+
+            if(x >= x1 && x <= x2) {
+                if(y >= y1 && y <= y2) {
+                    let vertical = false;
+                    if(x -1 <= x1 || x+1 >= x2) {
+                        vertical = true;
+                    }
+                    let xF = this.velocity.x < 0 ? Math.abs(this.velocity.x) : -this.velocity.x;
+                    let yF = this.velocity.y < 0 ? Math.abs(this.velocity.y) : -this.velocity.y;
+                    this.velocity = new Vector2(vertical ? xF : -xF, vertical ? -yF : yF);
+                }
+            }
+        }
+    }
+}
+
+class FreeSpace {
+    constructor(loc1, loc2) {
+        this.loc1 = loc1;
+        this.loc2 = loc2;
     }
 }
 
 class StarField {
     constructor() {
         this.stars = [];
+        this.spaces = [];
         this.connections = [];
     }
     newStar(x, y) {
@@ -71,18 +104,18 @@ class StarField {
         this.stars.push(star);
     }
     draw() {
-        console.log(this.stars.length);
+        let radius = (canvas.width + canvas.height) / 10;
         for(let i = 0; i < this.connections.length; i++) {
             let connection = this.connections[i];
 
             let alpha = 0;
-            if(connection.z < 300) {
-                alpha = 1 - (connection.z / 300) ;
+            if(connection.z < radius) {
+                alpha = 1 - (connection.z / radius) ;
             }
 
             let width = 1;
-            if(connection.z < 300) {
-                width = 5 - (connection.z / 300);
+            if(connection.z < radius) {
+                width = 5 - (connection.z / radius);
             }
 
             ctx.beginPath();
@@ -106,7 +139,7 @@ class StarField {
     calcConnections() {
         this.connections = [];
 
-        let radius = 300;
+        let radius = (canvas.width + canvas.height) / 10;
         for(let i = 0; i < this.stars.length; i++) {
 
             for(let z = 0; z < this.stars.length; z++) {
@@ -140,16 +173,50 @@ const loop = () => {
 };
 
 const startCanvas = () => {
-
-    for(let i = 0; i < 50; i++) {
-        let x = Math.floor(Math.random() * canvas.width);
-        let y = Math.floor(Math.random() * canvas.height);
-        field.newStar(x, y);
+    field.spaces.push(new FreeSpace(new Vector2(canvas.width / 2 - (text.offsetWidth / 2), canvas.height / 2 - (text.offsetHeight / 2)), new Vector2(canvas.width / 2 + (text.offsetWidth / 2),canvas.height / 2 + (text.offsetHeight / 2))));
+    let amount = (canvas.width + canvas.height) / 75;
+    for(let i = 0; i < amount; i++) {
+        let coords = genCoords();
+        field.newStar(coords.x, coords.y);
     }
     field.update();
     field.draw();
 
     window.requestAnimationFrame(loop);
+};
+
+const genCoords = () => {
+
+    let x = Math.floor(Math.random() * canvas.width);
+    let y = Math.floor(Math.random() * canvas.height);
+    let toReturn = new Vector2(x, y);
+
+    for(let i = 0; i < field.spaces.length; i++) {
+        let space = field.spaces[i];
+
+        let x1 = space.loc1.x;
+        let y1 = space.loc1.y;
+
+        let x2 = space.loc2.x;
+        let y2 = space.loc2.y;
+
+        if(x >= x1 && x <= x2) {
+            if(y >= y1 && y <= y2) {
+                toReturn = genCoords();
+            }
+        }
+    }
+
+    return toReturn;
+};
+
+const turnAll = () => {
+    for(let i = 0; i < field.stars.length; i++) {
+        let star = field.stars[i];
+        let x = star.velocity.x < 0 ? Math.abs(star.velocity.x) : -star.velocity.x;
+        let y = star.velocity.y < 0 ? Math.abs(star.velocity.y) : -star.velocity.y;
+        star.velocity = new Vector2(x,y);
+    }
 };
 
 document.addEventListener("DOMContentLoaded", function() {

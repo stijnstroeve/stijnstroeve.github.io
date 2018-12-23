@@ -1,8 +1,32 @@
+@import url('https://fonts.googleapis.com/css?family=Lato');
+
 #canvas {
     width: 100%;
     height: 100%;
+    position: relative;
+}
+
+#title {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-right: -50%;
+    transform: translate(-50%, -50%);
+}
+
+#title-text {
+    font-size: 100px;
+    font-family: 'Lato', sans-serif;
+    width: 800px;
+    height: 160px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+h1{
+    margin: 0;
 }
 
 body {
-    margin: 0
+    margin: 0;
 }
